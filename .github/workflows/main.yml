@@ -1,0 +1,71 @@
+name: Build Kronos model + APK
+
+# One click: Actions -> "Build Kronos model + APK" -> Run workflow.
+# At the end download the APK from the run's Artifacts (or from Releases -> hadlas-kronos-apk).
+# The repository must be PUBLIC (the app downloads the model from this repo's Releases).
+on:
+  workflow_dispatch:
+    inputs:
+      preset:
+        description: "Kronos size: mini (fast, recommended) or small (slower, bigger)"
+        default: "mini"
+        type: choice
+        options: [mini, small]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---- 1) Kronos -> ONNX (verified against PyTorch) ----
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install export dependencies
+        run: |
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu torch
+          pip install -r kronos_export/requirements.txt
+      - name: Export model
+        run: python kronos_export/export_kronos_onnx.py --preset "${{ inputs.preset }}" --out out
+
+      - name: Publish model to Releases (the app downloads it from here)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: kronos-model-v1
+          name: Kronos ONNX model
+          files: out/kronos-onnx.zip
+          make_latest: false
+
+      # ---- 2) Build the APK with the model URL baked in ----
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+      - name: Build APK
+        run: gradle :app:assembleDebug --no-daemon -PkronosModelUrl="https://github.com/${{ github.repository }}/releases/download/kronos-model-v1/kronos-onnx.zip"
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/*.apk hadlas-kronos.apk
+
+      - name: Upload APK (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hadlas-kronos-apk
+          path: hadlas-kronos.apk
+          if-no-files-found: error
+
+      - name: Attach APK to Releases (easy phone download)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: hadlas-kronos-apk
+          name: hadlas-kronos APK
+          files: hadlas-kronos.apk
+          make_latest: true
