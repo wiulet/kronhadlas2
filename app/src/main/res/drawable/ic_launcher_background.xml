@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Deep violet, distinct from the original teal/near-black (#0B0E14) launcher
+     background, so this "Alpha" build is visually distinguishable in the
+     app drawer / recents from the previously-installed version. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#1A0E2E" />
+</shape>

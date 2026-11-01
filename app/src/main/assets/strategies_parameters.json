@@ -1,0 +1,4774 @@
+{
+  "meta": {
+    "asset": "BTCUSDT",
+    "target_timeframe": "5m",
+    "backtest_period_days": 355,
+    "data_start_utc": "2025-09-12T00:00:00Z",
+    "data_end_utc": "2026-09-02T04:10:00Z",
+    "hard_constraints": {
+      "signal_window": "first 2 minutes of each 5m candle only",
+      "checkpoints": [
+        "A: immediately after the 1st closed 1m sub-candle (t+1min)",
+        "B: immediately after the 2nd closed 1m sub-candle (t+2min); only evaluated if A did not fire"
+      ],
+      "entry_range_green_pct": [
+        0.0,
+        0.03
+      ],
+      "entry_range_red_pct": [
+        -0.03,
+        0.0
+      ],
+      "reference_price_per_checkpoint": "close of the relevant 1m sub-candle",
+      "outcome_rule": "compare issued direction to final close vs open of the 5m candle; tie (close==open) counted as Red",
+      "outcome_tie_counts_as_red": true
+    },
+    "financial_model": {
+      "start_capital_usd": 100,
+      "stake_per_signal_usd": 1.0,
+      "win_usd": 0.5,
+      "loss_usd": -1.0,
+      "breakeven_win_rate_pct": 66.667
+    },
+    "validation_methodology": {
+      "blocks": "12 sequential blocks (B1-B12) spanning the full 1-year re-evaluation window, replacing the original 6x15-day scheme",
+      "in_sample_blocks": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6",
+        "B7",
+        "B8"
+      ],
+      "out_of_sample_blocks": [
+        "B9",
+        "B10",
+        "B11",
+        "B12"
+      ],
+      "selection_used_only": "in-sample blocks (B1-B8, ~8 months) for the 2026-09 strategy re-evaluation/search",
+      "out_of_sample_role": "independent validation only (B9-B12, ~4 months), never used in strategy selection",
+      "additional_robustness_check": "all retained/new strategies were also checked against 2025-10-01..2026-02-28 (the steepest single leg of the yearly decline, BTC ~126k->~85k) and none fell below the 66.667% breakeven win rate in that sub-window",
+      "revision_note": "2026-09 re-evaluation against a fresh 1-year BTCUSDT dataset: 18 of the original 27 strategies were removed for falling at/below breakeven or showing statistically weak (z<0.5) full-year performance; 9 originals kept as-is; 22 new strategies added (21 from the existing 12-primitive vocabulary + 1 using the newly-added Momentum_Ratio_V2 primitive), each independently in-sample/out-of-sample validated"
+    },
+    "warmup_days_excluded_before_data_start_utc": 10,
+    "schema_note": "strategies[].components[] may now include indicator=\"Momentum_Ratio_V2\" (params: threshold) alongside the original 12 primitive types; see Indicators.momentumRatioV2() / ComponentEvaluator.evalMomentumRatioV2()"
+  },
+  "strategies": [
+    {
+      "id": "STRAT-001",
+      "market_condition_bucket": "Bullish Trend",
+      "regime_gate": {
+        "code": "Trend_Bullish",
+        "description": "رژیم روند صعودی (Bullish Trend: ADX(14,5m)>=25 و +DI>-DI)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "min_move_pct": 0.02,
+          "hypothesis": "continuation",
+          "primitive_id": "micro_momentum_0.0002"
+        },
+        {
+          "indicator": "RSI",
+          "timeframe": "5m",
+          "period": 7,
+          "low_th": 30,
+          "high_th": 70,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "rsi_rev_tf5_7_30_70"
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "timeframe": "1h",
+          "period": 20,
+          "std": 2,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "bb_rev_tf1h"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 75,
+          "win_rate_pct": 62.67
+        },
+        "out_of_sample": {
+          "n_signals": 58,
+          "win_rate_pct": 77.59,
+          "pnl_per_signal_usd": 0.1638,
+          "z_score_vs_breakeven": 1.764
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 13,
+          "wins": 9,
+          "losses": 4,
+          "win_rate": 69.23,
+          "pnl": 0.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 14,
+          "wins": 10,
+          "losses": 4,
+          "win_rate": 71.43,
+          "pnl": 1.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 9,
+          "wins": 5,
+          "losses": 4,
+          "win_rate": 55.56,
+          "pnl": -1.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 14,
+          "wins": 10,
+          "losses": 4,
+          "win_rate": 71.43,
+          "pnl": 1.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 5,
+          "wins": 3,
+          "losses": 2,
+          "win_rate": 60.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 5,
+          "wins": 2,
+          "losses": 3,
+          "win_rate": 40.0,
+          "pnl": -2.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 3,
+          "wins": 2,
+          "losses": 1,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 12,
+          "wins": 6,
+          "losses": 6,
+          "win_rate": 50.0,
+          "pnl": -3.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 9,
+          "wins": 5,
+          "losses": 4,
+          "win_rate": 55.56,
+          "pnl": -1.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 13,
+          "wins": 12,
+          "losses": 1,
+          "win_rate": 92.31,
+          "pnl": 5.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 19,
+          "wins": 15,
+          "losses": 4,
+          "win_rate": 78.95,
+          "pnl": 3.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 17,
+          "wins": 13,
+          "losses": 4,
+          "win_rate": 76.47,
+          "pnl": 2.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-002",
+      "market_condition_bucket": "Bullish Trend",
+      "regime_gate": {
+        "code": "Trend_Bullish",
+        "description": "رژیم روند صعودی (Bullish Trend: ADX(14,5m)>=25 و +DI>-DI)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "min_move_pct": 0.02,
+          "hypothesis": "continuation",
+          "primitive_id": "micro_momentum_0.0002"
+        },
+        {
+          "indicator": "RSI",
+          "timeframe": "5m",
+          "period": 7,
+          "low_th": 30,
+          "high_th": 70,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "rsi_rev_tf5_7_30_70"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 380,
+          "win_rate_pct": 65.79
+        },
+        "out_of_sample": {
+          "n_signals": 269,
+          "win_rate_pct": 71.38,
+          "pnl_per_signal_usd": 0.0706,
+          "z_score_vs_breakeven": 1.638
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 65,
+          "wins": 46,
+          "losses": 19,
+          "win_rate": 70.77,
+          "pnl": 4.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 52,
+          "wins": 42,
+          "losses": 10,
+          "win_rate": 80.77,
+          "pnl": 11.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 41,
+          "wins": 25,
+          "losses": 16,
+          "win_rate": 60.98,
+          "pnl": -3.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 57,
+          "wins": 37,
+          "losses": 20,
+          "win_rate": 64.91,
+          "pnl": -1.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 29,
+          "wins": 22,
+          "losses": 7,
+          "win_rate": 75.86,
+          "pnl": 4.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 28,
+          "wins": 17,
+          "losses": 11,
+          "win_rate": 60.71,
+          "pnl": -2.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 40,
+          "wins": 17,
+          "losses": 23,
+          "win_rate": 42.5,
+          "pnl": -14.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 68,
+          "wins": 44,
+          "losses": 24,
+          "win_rate": 64.71,
+          "pnl": -2.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 73,
+          "wins": 53,
+          "losses": 20,
+          "win_rate": 72.6,
+          "pnl": 6.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 54,
+          "wins": 45,
+          "losses": 9,
+          "win_rate": 83.33,
+          "pnl": 13.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 75,
+          "wins": 49,
+          "losses": 26,
+          "win_rate": 65.33,
+          "pnl": -1.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 67,
+          "wins": 45,
+          "losses": 22,
+          "win_rate": 67.16,
+          "pnl": 0.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 89.7
+    },
+    {
+      "id": "STRAT-007",
+      "market_condition_bucket": "Sideways / Range",
+      "regime_gate": {
+        "code": "Trend_Sideways",
+        "description": "رژیم بدون روند/رنج (Sideways: ADX(14,5m)<25)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "min_move_pct": 0.02,
+          "hypothesis": "continuation",
+          "primitive_id": "micro_momentum_0.0002"
+        },
+        {
+          "indicator": "RSI",
+          "timeframe": "5m",
+          "period": 7,
+          "low_th": 25,
+          "high_th": 75,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "rsi_rev_tf5_7_25_75"
+        },
+        {
+          "indicator": "Williams %R",
+          "period": 14,
+          "timeframe": "5m",
+          "hypothesis": "mean_reversion",
+          "primitive_id": "willr_rev_tf5"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 355,
+          "win_rate_pct": 66.48
+        },
+        "out_of_sample": {
+          "n_signals": 208,
+          "win_rate_pct": 72.12,
+          "pnl_per_signal_usd": 0.0817,
+          "z_score_vs_breakeven": 1.667
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 57,
+          "wins": 43,
+          "losses": 14,
+          "win_rate": 75.44,
+          "pnl": 7.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 34,
+          "wins": 23,
+          "losses": 11,
+          "win_rate": 67.65,
+          "pnl": 0.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 37,
+          "wins": 21,
+          "losses": 16,
+          "win_rate": 56.76,
+          "pnl": -5.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 46,
+          "wins": 35,
+          "losses": 11,
+          "win_rate": 76.09,
+          "pnl": 6.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 45,
+          "wins": 34,
+          "losses": 11,
+          "win_rate": 75.56,
+          "pnl": 6.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 36,
+          "wins": 20,
+          "losses": 16,
+          "win_rate": 55.56,
+          "pnl": -6.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 39,
+          "wins": 20,
+          "losses": 19,
+          "win_rate": 51.28,
+          "pnl": -9.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 61,
+          "wins": 40,
+          "losses": 21,
+          "win_rate": 65.57,
+          "pnl": -1.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 58,
+          "wins": 44,
+          "losses": 14,
+          "win_rate": 75.86,
+          "pnl": 8.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 42,
+          "wins": 28,
+          "losses": 14,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 48,
+          "wins": 30,
+          "losses": 18,
+          "win_rate": 62.5,
+          "pnl": -3.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 60,
+          "wins": 48,
+          "losses": 12,
+          "win_rate": 80.0,
+          "pnl": 12.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 84.7
+    },
+    {
+      "id": "STRAT-009",
+      "market_condition_bucket": "Sideways / Range",
+      "regime_gate": {
+        "code": "Trend_Sideways",
+        "description": "رژیم بدون روند/رنج (Sideways: ADX(14,5m)<25)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "min_move_pct": 0.02,
+          "hypothesis": "continuation",
+          "primitive_id": "micro_momentum_0.0002"
+        },
+        {
+          "indicator": "CCI",
+          "period": 20,
+          "timeframe": "5m",
+          "threshold": 150,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "cci_rev_tf5_150"
+        },
+        {
+          "indicator": "MACD_cross",
+          "timeframe": "1h",
+          "fast": 12,
+          "slow": 26,
+          "signal": 9,
+          "primitive_id": "macd_cross_tf1h"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 411,
+          "win_rate_pct": 67.4
+        },
+        "out_of_sample": {
+          "n_signals": 224,
+          "win_rate_pct": 73.21,
+          "pnl_per_signal_usd": 0.0982,
+          "z_score_vs_breakeven": 2.079
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 56,
+          "wins": 43,
+          "losses": 13,
+          "win_rate": 76.79,
+          "pnl": 8.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 39,
+          "wins": 23,
+          "losses": 16,
+          "win_rate": 58.97,
+          "pnl": -4.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 40,
+          "wins": 26,
+          "losses": 14,
+          "win_rate": 65.0,
+          "pnl": -1.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 52,
+          "wins": 40,
+          "losses": 12,
+          "win_rate": 76.92,
+          "pnl": 8.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 56,
+          "wins": 40,
+          "losses": 16,
+          "win_rate": 71.43,
+          "pnl": 4.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 52,
+          "wins": 32,
+          "losses": 20,
+          "win_rate": 61.54,
+          "pnl": -4.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 50,
+          "wins": 24,
+          "losses": 26,
+          "win_rate": 48.0,
+          "pnl": -14.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 66,
+          "wins": 49,
+          "losses": 17,
+          "win_rate": 74.24,
+          "pnl": 7.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 61,
+          "wins": 41,
+          "losses": 20,
+          "win_rate": 67.21,
+          "pnl": 0.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 46,
+          "wins": 31,
+          "losses": 15,
+          "win_rate": 67.39,
+          "pnl": 0.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 63,
+          "wins": 51,
+          "losses": 12,
+          "win_rate": 80.95,
+          "pnl": 13.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 54,
+          "wins": 41,
+          "losses": 13,
+          "win_rate": 75.93,
+          "pnl": 7.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 80.0
+    },
+    {
+      "id": "STRAT-014",
+      "market_condition_bucket": "Low Volatility",
+      "regime_gate": {
+        "code": "Vol_Low",
+        "description": "رژیم نوسان پایین (Low Volatility: ATR%(5m) صدک زیر 30)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "micro_two_tick_confirm"
+        },
+        {
+          "indicator": "RSI",
+          "timeframe": "1m",
+          "period": 14,
+          "low_th": 30,
+          "high_th": 70,
+          "hypothesis": "momentum_continuation",
+          "primitive_id": "rsi_mom_tf1_14_30_70"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 130,
+          "win_rate_pct": 75.38
+        },
+        "out_of_sample": {
+          "n_signals": 134,
+          "win_rate_pct": 71.64,
+          "pnl_per_signal_usd": 0.0746,
+          "z_score_vs_breakeven": 1.222
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 45,
+          "wins": 32,
+          "losses": 13,
+          "win_rate": 71.11,
+          "pnl": 3.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 10,
+          "wins": 9,
+          "losses": 1,
+          "win_rate": 90.0,
+          "pnl": 3.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 9,
+          "wins": 7,
+          "losses": 2,
+          "win_rate": 77.78,
+          "pnl": 1.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 26,
+          "wins": 18,
+          "losses": 8,
+          "win_rate": 69.23,
+          "pnl": 1.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 18,
+          "wins": 15,
+          "losses": 3,
+          "win_rate": 83.33,
+          "pnl": 4.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 4,
+          "wins": 4,
+          "losses": 0,
+          "win_rate": 100.0,
+          "pnl": 2.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 6,
+          "wins": 4,
+          "losses": 2,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 12,
+          "wins": 9,
+          "losses": 3,
+          "win_rate": 75.0,
+          "pnl": 1.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 23,
+          "wins": 16,
+          "losses": 7,
+          "win_rate": 69.57,
+          "pnl": 1.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 15,
+          "wins": 10,
+          "losses": 5,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 30,
+          "wins": 21,
+          "losses": 9,
+          "win_rate": 70.0,
+          "pnl": 1.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 66,
+          "wins": 49,
+          "losses": 17,
+          "win_rate": 74.24,
+          "pnl": 7.5
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 56.4
+    },
+    {
+      "id": "STRAT-017",
+      "market_condition_bucket": "Strong Momentum (Up)",
+      "regime_gate": {
+        "code": "Mom_StrongUp",
+        "description": "مومنتوم صعودی قوی (Strong Up Momentum: |ROC10(5m)| صدک بالای 70، جهت مثبت)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "min_move_pct": 0.02,
+          "hypothesis": "continuation",
+          "primitive_id": "micro_momentum_0.0002"
+        },
+        {
+          "indicator": "RSI",
+          "timeframe": "5m",
+          "period": 14,
+          "low_th": 30,
+          "high_th": 70,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "rsi_rev_tf5_14_30_70"
+        },
+        {
+          "indicator": "Williams %R",
+          "period": 14,
+          "timeframe": "5m",
+          "hypothesis": "mean_reversion",
+          "primitive_id": "willr_rev_tf5"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 166,
+          "win_rate_pct": 66.27
+        },
+        "out_of_sample": {
+          "n_signals": 94,
+          "win_rate_pct": 79.79,
+          "pnl_per_signal_usd": 0.1968,
+          "z_score_vs_breakeven": 2.699
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 36,
+          "wins": 23,
+          "losses": 13,
+          "win_rate": 63.89,
+          "pnl": -1.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 19,
+          "wins": 13,
+          "losses": 6,
+          "win_rate": 68.42,
+          "pnl": 0.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 18,
+          "wins": 13,
+          "losses": 5,
+          "win_rate": 72.22,
+          "pnl": 1.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 15,
+          "wins": 12,
+          "losses": 3,
+          "win_rate": 80.0,
+          "pnl": 3.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 13,
+          "wins": 11,
+          "losses": 2,
+          "win_rate": 84.62,
+          "pnl": 3.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 10,
+          "wins": 7,
+          "losses": 3,
+          "win_rate": 70.0,
+          "pnl": 0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 20,
+          "wins": 10,
+          "losses": 10,
+          "win_rate": 50.0,
+          "pnl": -5.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 35,
+          "wins": 21,
+          "losses": 14,
+          "win_rate": 60.0,
+          "pnl": -3.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 23,
+          "wins": 20,
+          "losses": 3,
+          "win_rate": 86.96,
+          "pnl": 7.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 22,
+          "wins": 17,
+          "losses": 5,
+          "win_rate": 77.27,
+          "pnl": 3.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 25,
+          "wins": 19,
+          "losses": 6,
+          "win_rate": 76.0,
+          "pnl": 3.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 24,
+          "wins": 19,
+          "losses": 5,
+          "win_rate": 79.17,
+          "pnl": 4.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 99.2
+    },
+    {
+      "id": "STRAT-019",
+      "market_condition_bucket": "Strong Momentum (Up)",
+      "regime_gate": {
+        "code": "Mom_StrongUp",
+        "description": "مومنتوم صعودی قوی (Strong Up Momentum: |ROC10(5m)| صدک بالای 70، جهت مثبت)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "min_move_pct": 0.02,
+          "hypothesis": "continuation",
+          "primitive_id": "micro_momentum_0.0002"
+        },
+        {
+          "indicator": "RSI",
+          "timeframe": "5m",
+          "period": 7,
+          "low_th": 30,
+          "high_th": 70,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "rsi_rev_tf5_7_30_70"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 516,
+          "win_rate_pct": 68.41
+        },
+        "out_of_sample": {
+          "n_signals": 353,
+          "win_rate_pct": 71.1,
+          "pnl_per_signal_usd": 0.0666,
+          "z_score_vs_breakeven": 1.769
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 82,
+          "wins": 62,
+          "losses": 20,
+          "win_rate": 75.61,
+          "pnl": 11.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 66,
+          "wins": 48,
+          "losses": 18,
+          "win_rate": 72.73,
+          "pnl": 6.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 59,
+          "wins": 42,
+          "losses": 17,
+          "win_rate": 71.19,
+          "pnl": 4.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 65,
+          "wins": 48,
+          "losses": 17,
+          "win_rate": 73.85,
+          "pnl": 7.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 49,
+          "wins": 39,
+          "losses": 10,
+          "win_rate": 79.59,
+          "pnl": 9.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 37,
+          "wins": 24,
+          "losses": 13,
+          "win_rate": 64.86,
+          "pnl": -1.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 60,
+          "wins": 27,
+          "losses": 33,
+          "win_rate": 45.0,
+          "pnl": -19.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 98,
+          "wins": 63,
+          "losses": 35,
+          "win_rate": 64.29,
+          "pnl": -3.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 86,
+          "wins": 64,
+          "losses": 22,
+          "win_rate": 74.42,
+          "pnl": 10.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 75,
+          "wins": 55,
+          "losses": 20,
+          "win_rate": 73.33,
+          "pnl": 7.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 94,
+          "wins": 61,
+          "losses": 33,
+          "win_rate": 64.89,
+          "pnl": -2.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 98,
+          "wins": 71,
+          "losses": 27,
+          "win_rate": 72.45,
+          "pnl": 8.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 92.4
+    },
+    {
+      "id": "STRAT-022",
+      "market_condition_bucket": "Weak Momentum",
+      "regime_gate": {
+        "code": "Mom_Weak",
+        "description": "مومنتوم ضعیف (Weak Momentum: |ROC10(5m)| صدک زیر 70)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "min_move_pct": 0.015,
+          "hypothesis": "continuation",
+          "primitive_id": "micro_momentum_0.00015"
+        },
+        {
+          "indicator": "RSI",
+          "timeframe": "1m",
+          "period": 7,
+          "low_th": 25,
+          "high_th": 75,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "rsi_rev_tf1_7_25_75"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 96,
+          "win_rate_pct": 64.58
+        },
+        "out_of_sample": {
+          "n_signals": 55,
+          "win_rate_pct": 78.18,
+          "pnl_per_signal_usd": 0.1727,
+          "z_score_vs_breakeven": 1.812
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 12,
+          "wins": 6,
+          "losses": 6,
+          "win_rate": 50.0,
+          "pnl": -3.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 15,
+          "wins": 8,
+          "losses": 7,
+          "win_rate": 53.33,
+          "pnl": -3.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 15,
+          "wins": 13,
+          "losses": 2,
+          "win_rate": 86.67,
+          "pnl": 4.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 7,
+          "wins": 3,
+          "losses": 4,
+          "win_rate": 42.86,
+          "pnl": -2.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 10,
+          "wins": 8,
+          "losses": 2,
+          "win_rate": 80.0,
+          "pnl": 2.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 15,
+          "wins": 10,
+          "losses": 5,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 15,
+          "wins": 8,
+          "losses": 7,
+          "win_rate": 53.33,
+          "pnl": -3.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 7,
+          "wins": 6,
+          "losses": 1,
+          "win_rate": 85.71,
+          "pnl": 2.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 11,
+          "wins": 10,
+          "losses": 1,
+          "win_rate": 90.91,
+          "pnl": 4.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 19,
+          "wins": 14,
+          "losses": 5,
+          "win_rate": 73.68,
+          "pnl": 2.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 12,
+          "wins": 9,
+          "losses": 3,
+          "win_rate": 75.0,
+          "pnl": 1.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 13,
+          "wins": 10,
+          "losses": 3,
+          "win_rate": 76.92,
+          "pnl": 2.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 27.2
+    },
+    {
+      "id": "STRAT-025",
+      "market_condition_bucket": "General / All Conditions",
+      "regime_gate": {
+        "code": "All",
+        "description": "بدون فیلتر رژیم بازار (General / All Conditions)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "CCI",
+          "period": 20,
+          "timeframe": "1h",
+          "threshold": 150,
+          "hypothesis": "momentum_continuation",
+          "primitive_id": "cci_mom_tf1h_150"
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "timeframe": "5m",
+          "period": 20,
+          "std": 2,
+          "hypothesis": "mean_reversion",
+          "primitive_id": "bb_rev_tf5"
+        },
+        {
+          "indicator": "Williams %R",
+          "period": 14,
+          "timeframe": "5m",
+          "hypothesis": "mean_reversion",
+          "primitive_id": "willr_rev_tf5"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 165,
+          "win_rate_pct": 64.85
+        },
+        "out_of_sample": {
+          "n_signals": 106,
+          "win_rate_pct": 75.47,
+          "pnl_per_signal_usd": 0.1321,
+          "z_score_vs_breakeven": 1.923
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 36,
+          "wins": 23,
+          "losses": 13,
+          "win_rate": 63.89,
+          "pnl": -1.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 13,
+          "wins": 10,
+          "losses": 3,
+          "win_rate": 76.92,
+          "pnl": 2.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 20,
+          "wins": 13,
+          "losses": 7,
+          "win_rate": 65.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 19,
+          "wins": 15,
+          "losses": 4,
+          "win_rate": 78.95,
+          "pnl": 3.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 32,
+          "wins": 18,
+          "losses": 14,
+          "win_rate": 56.25,
+          "pnl": -5.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 13,
+          "wins": 8,
+          "losses": 5,
+          "win_rate": 61.54,
+          "pnl": -1.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 14,
+          "wins": 8,
+          "losses": 6,
+          "win_rate": 57.14,
+          "pnl": -2.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 18,
+          "wins": 12,
+          "losses": 6,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 30,
+          "wins": 20,
+          "losses": 10,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 15,
+          "wins": 11,
+          "losses": 4,
+          "win_rate": 73.33,
+          "pnl": 1.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 37,
+          "wins": 28,
+          "losses": 9,
+          "win_rate": 75.68,
+          "pnl": 5.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 24,
+          "wins": 21,
+          "losses": 3,
+          "win_rate": 87.5,
+          "pnl": 7.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "حفظ‌شده از نسخه قبلی؛ عملکرد یک‌ساله معتبر بود",
+      "max_signal_overlap_with_other_selected_strategies_pct": 31.4
+    },
+    {
+      "id": "STRAT-N1B01",
+      "market_condition_bucket": "Bearish Trend",
+      "regime_gate": {
+        "code": "Trend_Bearish",
+        "description": "رژیم روند نزولی (Bearish Trend: ADX(14,5m)>=25 و -DI>+DI)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "candle_pattern",
+          "primitive_id": "marubozu_tf5m",
+          "timeframe": "5m",
+          "pattern": "marubozu",
+          "hypothesis": "momentum_continuation"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 84,
+          "win_rate_pct": 69.05
+        },
+        "out_of_sample": {
+          "n_signals": 90,
+          "win_rate_pct": 72.22,
+          "pnl_per_signal_usd": 0.0833,
+          "z_score_vs_breakeven": 1.118
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 32,
+          "wins": 21,
+          "losses": 11,
+          "win_rate": 65.62,
+          "pnl": -0.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 5,
+          "wins": 3,
+          "losses": 2,
+          "win_rate": 60.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 6,
+          "wins": 3,
+          "losses": 3,
+          "win_rate": 50.0,
+          "pnl": -1.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 5,
+          "wins": 4,
+          "losses": 1,
+          "win_rate": 80.0,
+          "pnl": 1.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 19,
+          "wins": 16,
+          "losses": 3,
+          "win_rate": 84.21,
+          "pnl": 5.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 7,
+          "wins": 4,
+          "losses": 3,
+          "win_rate": 57.14,
+          "pnl": -1.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 5,
+          "wins": 2,
+          "losses": 3,
+          "win_rate": 40.0,
+          "pnl": -2.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 5,
+          "wins": 5,
+          "losses": 0,
+          "win_rate": 100.0,
+          "pnl": 2.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 16,
+          "wins": 8,
+          "losses": 8,
+          "win_rate": 50.0,
+          "pnl": -4.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 13,
+          "wins": 9,
+          "losses": 4,
+          "win_rate": 69.23,
+          "pnl": 0.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 15,
+          "wins": 10,
+          "losses": 5,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 46,
+          "wins": 38,
+          "losses": 8,
+          "win_rate": 82.61,
+          "pnl": 11.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + مارابوزوی کندل قبلی؛ ادامه فشار فروش در روند نزولی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N1B02",
+      "market_condition_bucket": "Bearish Trend",
+      "regime_gate": {
+        "code": "Trend_Bearish",
+        "description": "رژیم روند نزولی (Bearish Trend: ADX(14,5m)>=25 و -DI>+DI)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "RSI",
+          "primitive_id": "rsi_mea_tf5m_7_25_75",
+          "timeframe": "5m",
+          "period": 7,
+          "low_th": 25,
+          "high_th": 75,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 54,
+          "win_rate_pct": 70.37
+        },
+        "out_of_sample": {
+          "n_signals": 49,
+          "win_rate_pct": 71.43,
+          "pnl_per_signal_usd": 0.0714,
+          "z_score_vs_breakeven": 0.707
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 16,
+          "wins": 12,
+          "losses": 4,
+          "win_rate": 75.0,
+          "pnl": 2.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 10,
+          "wins": 6,
+          "losses": 4,
+          "win_rate": 60.0,
+          "pnl": -1.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 2,
+          "wins": 1,
+          "losses": 1,
+          "win_rate": 50.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 6,
+          "wins": 6,
+          "losses": 0,
+          "win_rate": 100.0,
+          "pnl": 3.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 8,
+          "wins": 6,
+          "losses": 2,
+          "win_rate": 75.0,
+          "pnl": 1.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 3,
+          "wins": 2,
+          "losses": 1,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 5,
+          "wins": 3,
+          "losses": 2,
+          "win_rate": 60.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 4,
+          "wins": 2,
+          "losses": 2,
+          "win_rate": 50.0,
+          "pnl": -1.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 14,
+          "wins": 13,
+          "losses": 1,
+          "win_rate": 92.86,
+          "pnl": 5.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 3,
+          "wins": 1,
+          "losses": 2,
+          "win_rate": 33.33,
+          "pnl": -1.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 19,
+          "wins": 11,
+          "losses": 8,
+          "win_rate": 57.89,
+          "pnl": -2.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 13,
+          "wins": 10,
+          "losses": 3,
+          "win_rate": 76.92,
+          "pnl": 2.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + RSI(7,5m) بازگشتی؛ برگشت کوتاه‌مدت داخل روند نزولی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N1B03",
+      "market_condition_bucket": "Bearish Trend",
+      "regime_gate": {
+        "code": "Trend_Bearish",
+        "description": "رژیم روند نزولی (Bearish Trend: ADX(14,5m)>=25 و -DI>+DI)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "primitive_id": "bb_rev_tf5m_20_2.0",
+          "timeframe": "5m",
+          "period": 20,
+          "std": 2.0,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 58,
+          "win_rate_pct": 74.14
+        },
+        "out_of_sample": {
+          "n_signals": 48,
+          "win_rate_pct": 70.83,
+          "pnl_per_signal_usd": 0.0625,
+          "z_score_vs_breakeven": 0.612
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 14,
+          "wins": 12,
+          "losses": 2,
+          "win_rate": 85.71,
+          "pnl": 4.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 7,
+          "wins": 5,
+          "losses": 2,
+          "win_rate": 71.43,
+          "pnl": 0.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 2,
+          "wins": 1,
+          "losses": 1,
+          "win_rate": 50.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 8,
+          "wins": 7,
+          "losses": 1,
+          "win_rate": 87.5,
+          "pnl": 2.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 10,
+          "wins": 8,
+          "losses": 2,
+          "win_rate": 80.0,
+          "pnl": 2.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 4,
+          "wins": 3,
+          "losses": 1,
+          "win_rate": 75.0,
+          "pnl": 0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 8,
+          "wins": 4,
+          "losses": 4,
+          "win_rate": 50.0,
+          "pnl": -2.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 5,
+          "wins": 3,
+          "losses": 2,
+          "win_rate": 60.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 11,
+          "wins": 9,
+          "losses": 2,
+          "win_rate": 81.82,
+          "pnl": 2.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 5,
+          "wins": 4,
+          "losses": 1,
+          "win_rate": 80.0,
+          "pnl": 1.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 16,
+          "wins": 9,
+          "losses": 7,
+          "win_rate": 56.25,
+          "pnl": -2.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 16,
+          "wins": 12,
+          "losses": 4,
+          "win_rate": 75.0,
+          "pnl": 2.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + %B بولینگر(20,2,5m)؛ برگشت از باند در روند نزولی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N2H01",
+      "market_condition_bucket": "High Volatility",
+      "regime_gate": {
+        "code": "Vol_High",
+        "description": "رژیم نوسان بالا (High Volatility: ATR%(5m) در صدک بالای 70 نسبت به 100 کندل اخیر)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "CCI",
+          "primitive_id": "cci_mea_tf5m_14_100",
+          "timeframe": "5m",
+          "period": 14,
+          "threshold": 100,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 393,
+          "win_rate_pct": 68.45
+        },
+        "out_of_sample": {
+          "n_signals": 223,
+          "win_rate_pct": 73.09,
+          "pnl_per_signal_usd": 0.0964,
+          "z_score_vs_breakeven": 2.036
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 57,
+          "wins": 40,
+          "losses": 17,
+          "win_rate": 70.18,
+          "pnl": 3.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 52,
+          "wins": 32,
+          "losses": 20,
+          "win_rate": 61.54,
+          "pnl": -4.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 35,
+          "wins": 22,
+          "losses": 13,
+          "win_rate": 62.86,
+          "pnl": -2.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 48,
+          "wins": 38,
+          "losses": 10,
+          "win_rate": 79.17,
+          "pnl": 9.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 49,
+          "wins": 32,
+          "losses": 17,
+          "win_rate": 65.31,
+          "pnl": -1.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 28,
+          "wins": 17,
+          "losses": 11,
+          "win_rate": 60.71,
+          "pnl": -2.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 45,
+          "wins": 30,
+          "losses": 15,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 79,
+          "wins": 58,
+          "losses": 21,
+          "win_rate": 73.42,
+          "pnl": 8.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 52,
+          "wins": 41,
+          "losses": 11,
+          "win_rate": 78.85,
+          "pnl": 9.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 48,
+          "wins": 31,
+          "losses": 17,
+          "win_rate": 64.58,
+          "pnl": -1.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 65,
+          "wins": 45,
+          "losses": 20,
+          "win_rate": 69.23,
+          "pnl": 2.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 58,
+          "wins": 46,
+          "losses": 12,
+          "win_rate": 79.31,
+          "pnl": 11.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "مومنتوم میکرو + CCI(14,5m) بازگشتی؛ فید نوسان بالا",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N2H02",
+      "market_condition_bucket": "High Volatility",
+      "regime_gate": {
+        "code": "Vol_High",
+        "description": "رژیم نوسان بالا (High Volatility: ATR%(5m) در صدک بالای 70 نسبت به 100 کندل اخیر)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "CCI",
+          "primitive_id": "cci_mea_tf1h_14_100",
+          "timeframe": "1h",
+          "period": 14,
+          "threshold": 100,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 315,
+          "win_rate_pct": 69.21
+        },
+        "out_of_sample": {
+          "n_signals": 232,
+          "win_rate_pct": 69.4,
+          "pnl_per_signal_usd": 0.0409,
+          "z_score_vs_breakeven": 0.882
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 65,
+          "wins": 46,
+          "losses": 19,
+          "win_rate": 70.77,
+          "pnl": 4.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 28,
+          "wins": 19,
+          "losses": 9,
+          "win_rate": 67.86,
+          "pnl": 0.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 21,
+          "wins": 17,
+          "losses": 4,
+          "win_rate": 80.95,
+          "pnl": 4.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 53,
+          "wins": 42,
+          "losses": 11,
+          "win_rate": 79.25,
+          "pnl": 10.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 51,
+          "wins": 37,
+          "losses": 14,
+          "win_rate": 72.55,
+          "pnl": 4.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 16,
+          "wins": 5,
+          "losses": 11,
+          "win_rate": 31.25,
+          "pnl": -8.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 25,
+          "wins": 17,
+          "losses": 8,
+          "win_rate": 68.0,
+          "pnl": 0.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 56,
+          "wins": 35,
+          "losses": 21,
+          "win_rate": 62.5,
+          "pnl": -3.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 72,
+          "wins": 50,
+          "losses": 22,
+          "win_rate": 69.44,
+          "pnl": 3.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 28,
+          "wins": 20,
+          "losses": 8,
+          "win_rate": 71.43,
+          "pnl": 2.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 70,
+          "wins": 50,
+          "losses": 20,
+          "win_rate": 71.43,
+          "pnl": 5.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 62,
+          "wins": 41,
+          "losses": 21,
+          "win_rate": 66.13,
+          "pnl": -0.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + CCI(14,1h) بازگشتی؛ فیلتر تایم‌فریم بالاتر برای نوسان شدید",
+      "max_signal_overlap_with_other_selected_strategies_pct": 21.9
+    },
+    {
+      "id": "STRAT-N2H03",
+      "market_condition_bucket": "High Volatility",
+      "regime_gate": {
+        "code": "Vol_High",
+        "description": "رژیم نوسان بالا (High Volatility: ATR%(5m) در صدک بالای 70 نسبت به 100 کندل اخیر)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "Stochastic %K",
+          "primitive_id": "stoch_rev_tf5m_14_3",
+          "timeframe": "5m",
+          "k_period": 14,
+          "d_period": 3,
+          "low_th": 20,
+          "high_th": 80,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 377,
+          "win_rate_pct": 67.9
+        },
+        "out_of_sample": {
+          "n_signals": 203,
+          "win_rate_pct": 73.4,
+          "pnl_per_signal_usd": 0.101,
+          "z_score_vs_breakeven": 2.035
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 63,
+          "wins": 46,
+          "losses": 17,
+          "win_rate": 73.02,
+          "pnl": 6.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 57,
+          "wins": 34,
+          "losses": 23,
+          "win_rate": 59.65,
+          "pnl": -6.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 35,
+          "wins": 21,
+          "losses": 14,
+          "win_rate": 60.0,
+          "pnl": -3.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 47,
+          "wins": 38,
+          "losses": 9,
+          "win_rate": 80.85,
+          "pnl": 10.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 33,
+          "wins": 21,
+          "losses": 12,
+          "win_rate": 63.64,
+          "pnl": -1.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 30,
+          "wins": 18,
+          "losses": 12,
+          "win_rate": 60.0,
+          "pnl": -3.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 45,
+          "wins": 31,
+          "losses": 14,
+          "win_rate": 68.89,
+          "pnl": 1.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 67,
+          "wins": 47,
+          "losses": 20,
+          "win_rate": 70.15,
+          "pnl": 3.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 44,
+          "wins": 34,
+          "losses": 10,
+          "win_rate": 77.27,
+          "pnl": 7.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 44,
+          "wins": 27,
+          "losses": 17,
+          "win_rate": 61.36,
+          "pnl": -3.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 68,
+          "wins": 51,
+          "losses": 17,
+          "win_rate": 75.0,
+          "pnl": 8.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 47,
+          "wins": 37,
+          "losses": 10,
+          "win_rate": 78.72,
+          "pnl": 8.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "مومنتوم میکرو + استوکاستیک(14,3,5m) بازگشتی؛ فید نوسان بالا",
+      "max_signal_overlap_with_other_selected_strategies_pct": 78.6
+    },
+    {
+      "id": "STRAT-N3M01",
+      "market_condition_bucket": "Medium Volatility",
+      "regime_gate": {
+        "code": "Vol_Medium",
+        "description": "رژیم نوسان متوسط (Medium Volatility: ATR%(5m) صدک 30 تا 70)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "candle_pattern",
+          "primitive_id": "marubozu_tf5m",
+          "timeframe": "5m",
+          "pattern": "marubozu",
+          "hypothesis": "momentum_continuation"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 155,
+          "win_rate_pct": 70.32
+        },
+        "out_of_sample": {
+          "n_signals": 148,
+          "win_rate_pct": 70.27,
+          "pnl_per_signal_usd": 0.0541,
+          "z_score_vs_breakeven": 0.93
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 59,
+          "wins": 41,
+          "losses": 18,
+          "win_rate": 69.49,
+          "pnl": 2.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 12,
+          "wins": 9,
+          "losses": 3,
+          "win_rate": 75.0,
+          "pnl": 1.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 8,
+          "wins": 5,
+          "losses": 3,
+          "win_rate": 62.5,
+          "pnl": -0.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 17,
+          "wins": 9,
+          "losses": 8,
+          "win_rate": 52.94,
+          "pnl": -3.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 24,
+          "wins": 17,
+          "losses": 7,
+          "win_rate": 70.83,
+          "pnl": 1.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 7,
+          "wins": 5,
+          "losses": 2,
+          "win_rate": 71.43,
+          "pnl": 0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 5,
+          "wins": 4,
+          "losses": 1,
+          "win_rate": 80.0,
+          "pnl": 1.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 23,
+          "wins": 19,
+          "losses": 4,
+          "win_rate": 82.61,
+          "pnl": 5.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 33,
+          "wins": 18,
+          "losses": 15,
+          "win_rate": 54.55,
+          "pnl": -6.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 15,
+          "wins": 10,
+          "losses": 5,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 30,
+          "wins": 20,
+          "losses": 10,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 70,
+          "wins": 56,
+          "losses": 14,
+          "win_rate": 80.0,
+          "pnl": 14.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + مارابوزو(5m)؛ نوسان متوسط",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N3M02",
+      "market_condition_bucket": "Medium Volatility",
+      "regime_gate": {
+        "code": "Vol_Medium",
+        "description": "رژیم نوسان متوسط (Medium Volatility: ATR%(5m) صدک 30 تا 70)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "Stochastic %K",
+          "primitive_id": "stoch_rev_tf5m_14_3",
+          "timeframe": "5m",
+          "k_period": 14,
+          "d_period": 3,
+          "low_th": 20,
+          "high_th": 80,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 481,
+          "win_rate_pct": 67.57
+        },
+        "out_of_sample": {
+          "n_signals": 318,
+          "win_rate_pct": 68.55,
+          "pnl_per_signal_usd": 0.0283,
+          "z_score_vs_breakeven": 0.714
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 88,
+          "wins": 64,
+          "losses": 24,
+          "win_rate": 72.73,
+          "pnl": 8.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 40,
+          "wins": 24,
+          "losses": 16,
+          "win_rate": 60.0,
+          "pnl": -4.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 56,
+          "wins": 32,
+          "losses": 24,
+          "win_rate": 57.14,
+          "pnl": -8.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 59,
+          "wins": 42,
+          "losses": 17,
+          "win_rate": 71.19,
+          "pnl": 4.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 58,
+          "wins": 41,
+          "losses": 17,
+          "win_rate": 70.69,
+          "pnl": 3.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 49,
+          "wins": 37,
+          "losses": 12,
+          "win_rate": 75.51,
+          "pnl": 6.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 60,
+          "wins": 32,
+          "losses": 28,
+          "win_rate": 53.33,
+          "pnl": -12.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 71,
+          "wins": 53,
+          "losses": 18,
+          "win_rate": 74.65,
+          "pnl": 8.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 83,
+          "wins": 63,
+          "losses": 20,
+          "win_rate": 75.9,
+          "pnl": 11.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 85,
+          "wins": 56,
+          "losses": 29,
+          "win_rate": 65.88,
+          "pnl": -1.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 72,
+          "wins": 44,
+          "losses": 28,
+          "win_rate": 61.11,
+          "pnl": -6.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 78,
+          "wins": 55,
+          "losses": 23,
+          "win_rate": 70.51,
+          "pnl": 4.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "مومنتوم میکرو + استوکاستیک(14,3,5m) بازگشتی؛ نوسان متوسط",
+      "max_signal_overlap_with_other_selected_strategies_pct": 76.8
+    },
+    {
+      "id": "STRAT-N3M03",
+      "market_condition_bucket": "Medium Volatility",
+      "regime_gate": {
+        "code": "Vol_Medium",
+        "description": "رژیم نوسان متوسط (Medium Volatility: ATR%(5m) صدک 30 تا 70)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "primitive_id": "bb_rev_tf5m_20_2.5",
+          "timeframe": "5m",
+          "period": 20,
+          "std": 2.5,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 64,
+          "win_rate_pct": 73.44
+        },
+        "out_of_sample": {
+          "n_signals": 58,
+          "win_rate_pct": 74.14,
+          "pnl_per_signal_usd": 0.1121,
+          "z_score_vs_breakeven": 1.207
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 14,
+          "wins": 13,
+          "losses": 1,
+          "win_rate": 92.86,
+          "pnl": 5.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 7,
+          "wins": 6,
+          "losses": 1,
+          "win_rate": 85.71,
+          "pnl": 2.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 4,
+          "wins": 1,
+          "losses": 3,
+          "win_rate": 25.0,
+          "pnl": -2.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 8,
+          "wins": 7,
+          "losses": 1,
+          "win_rate": 87.5,
+          "pnl": 2.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 9,
+          "wins": 8,
+          "losses": 1,
+          "win_rate": 88.89,
+          "pnl": 3.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 4,
+          "wins": 2,
+          "losses": 2,
+          "win_rate": 50.0,
+          "pnl": -1.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 5,
+          "wins": 1,
+          "losses": 4,
+          "win_rate": 20.0,
+          "pnl": -3.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 13,
+          "wins": 9,
+          "losses": 4,
+          "win_rate": 69.23,
+          "pnl": 0.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 12,
+          "wins": 9,
+          "losses": 3,
+          "win_rate": 75.0,
+          "pnl": 1.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 15,
+          "wins": 10,
+          "losses": 5,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 14,
+          "wins": 10,
+          "losses": 4,
+          "win_rate": 71.43,
+          "pnl": 1.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 17,
+          "wins": 14,
+          "losses": 3,
+          "win_rate": 82.35,
+          "pnl": 4.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "مومنتوم میکرو + %B بولینگر(20,2.5,5m)؛ نوسان متوسط با باند پهن‌تر",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N4D01",
+      "market_condition_bucket": "Strong Momentum (Down)",
+      "regime_gate": {
+        "code": "Mom_StrongDown",
+        "description": "مومنتوم نزولی قوی (Strong Down Momentum: |ROC10(5m)| صدک بالای 70، جهت منفی)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "primitive_id": "bb_rev_tf5m_20_2.0",
+          "timeframe": "5m",
+          "period": 20,
+          "std": 2.0,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 88,
+          "win_rate_pct": 73.86
+        },
+        "out_of_sample": {
+          "n_signals": 87,
+          "win_rate_pct": 71.26,
+          "pnl_per_signal_usd": 0.069,
+          "z_score_vs_breakeven": 0.91
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 20,
+          "wins": 18,
+          "losses": 2,
+          "win_rate": 90.0,
+          "pnl": 7.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 7,
+          "wins": 4,
+          "losses": 3,
+          "win_rate": 57.14,
+          "pnl": -1.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 5,
+          "wins": 2,
+          "losses": 3,
+          "win_rate": 40.0,
+          "pnl": -2.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 14,
+          "wins": 12,
+          "losses": 2,
+          "win_rate": 85.71,
+          "pnl": 4.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 21,
+          "wins": 15,
+          "losses": 6,
+          "win_rate": 71.43,
+          "pnl": 1.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 6,
+          "wins": 4,
+          "losses": 2,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 5,
+          "wins": 2,
+          "losses": 3,
+          "win_rate": 40.0,
+          "pnl": -2.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 10,
+          "wins": 8,
+          "losses": 2,
+          "win_rate": 80.0,
+          "pnl": 2.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 24,
+          "wins": 18,
+          "losses": 6,
+          "win_rate": 75.0,
+          "pnl": 3.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 9,
+          "wins": 4,
+          "losses": 5,
+          "win_rate": 44.44,
+          "pnl": -3.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 33,
+          "wins": 22,
+          "losses": 11,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 21,
+          "wins": 18,
+          "losses": 3,
+          "win_rate": 85.71,
+          "pnl": 6.0
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + %B بولینگر(20,2,5m)؛ مومنتوم نزولی قوی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N4D02",
+      "market_condition_bucket": "Strong Momentum (Down)",
+      "regime_gate": {
+        "code": "Mom_StrongDown",
+        "description": "مومنتوم نزولی قوی (Strong Down Momentum: |ROC10(5m)| صدک بالای 70، جهت منفی)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "CCI",
+          "primitive_id": "cci_mea_tf5m_14_100",
+          "timeframe": "5m",
+          "period": 14,
+          "threshold": 100,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 173,
+          "win_rate_pct": 68.21
+        },
+        "out_of_sample": {
+          "n_signals": 141,
+          "win_rate_pct": 70.92,
+          "pnl_per_signal_usd": 0.0638,
+          "z_score_vs_breakeven": 1.072
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 35,
+          "wins": 27,
+          "losses": 8,
+          "win_rate": 77.14,
+          "pnl": 5.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 22,
+          "wins": 15,
+          "losses": 7,
+          "win_rate": 68.18,
+          "pnl": 0.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 9,
+          "wins": 2,
+          "losses": 7,
+          "win_rate": 22.22,
+          "pnl": -6.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 22,
+          "wins": 18,
+          "losses": 4,
+          "win_rate": 81.82,
+          "pnl": 5.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 32,
+          "wins": 25,
+          "losses": 7,
+          "win_rate": 78.12,
+          "pnl": 5.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 13,
+          "wins": 8,
+          "losses": 5,
+          "win_rate": 61.54,
+          "pnl": -1.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 16,
+          "wins": 8,
+          "losses": 8,
+          "win_rate": 50.0,
+          "pnl": -4.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 24,
+          "wins": 15,
+          "losses": 9,
+          "win_rate": 62.5,
+          "pnl": -1.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 35,
+          "wins": 26,
+          "losses": 9,
+          "win_rate": 74.29,
+          "pnl": 4.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 21,
+          "wins": 8,
+          "losses": 13,
+          "win_rate": 38.1,
+          "pnl": -9.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 48,
+          "wins": 35,
+          "losses": 13,
+          "win_rate": 72.92,
+          "pnl": 4.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 37,
+          "wins": 31,
+          "losses": 6,
+          "win_rate": 83.78,
+          "pnl": 9.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + CCI(14,5m) بازگشتی؛ مومنتوم نزولی قوی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 89.2
+    },
+    {
+      "id": "STRAT-N4D03",
+      "market_condition_bucket": "Strong Momentum (Down)",
+      "regime_gate": {
+        "code": "Mom_StrongDown",
+        "description": "مومنتوم نزولی قوی (Strong Down Momentum: |ROC10(5m)| صدک بالای 70، جهت منفی)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "RSI",
+          "primitive_id": "rsi_mea_tf5m_7_25_75",
+          "timeframe": "5m",
+          "period": 7,
+          "low_th": 25,
+          "high_th": 75,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 74,
+          "win_rate_pct": 75.68
+        },
+        "out_of_sample": {
+          "n_signals": 78,
+          "win_rate_pct": 70.51,
+          "pnl_per_signal_usd": 0.0577,
+          "z_score_vs_breakeven": 0.721
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 18,
+          "wins": 15,
+          "losses": 3,
+          "win_rate": 83.33,
+          "pnl": 4.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 11,
+          "wins": 8,
+          "losses": 3,
+          "win_rate": 72.73,
+          "pnl": 1.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 4,
+          "wins": 2,
+          "losses": 2,
+          "win_rate": 50.0,
+          "pnl": -1.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 12,
+          "wins": 10,
+          "losses": 2,
+          "win_rate": 83.33,
+          "pnl": 3.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 13,
+          "wins": 10,
+          "losses": 3,
+          "win_rate": 76.92,
+          "pnl": 2.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 4,
+          "wins": 3,
+          "losses": 1,
+          "win_rate": 75.0,
+          "pnl": 0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 4,
+          "wins": 2,
+          "losses": 2,
+          "win_rate": 50.0,
+          "pnl": -1.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 8,
+          "wins": 6,
+          "losses": 2,
+          "win_rate": 75.0,
+          "pnl": 1.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 20,
+          "wins": 17,
+          "losses": 3,
+          "win_rate": 85.0,
+          "pnl": 5.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 8,
+          "wins": 2,
+          "losses": 6,
+          "win_rate": 25.0,
+          "pnl": -5.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 30,
+          "wins": 19,
+          "losses": 11,
+          "win_rate": 63.33,
+          "pnl": -1.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 20,
+          "wins": 17,
+          "losses": 3,
+          "win_rate": 85.0,
+          "pnl": 5.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "دو تیک تاییدی + RSI(7,5m) بازگشتی؛ مومنتوم نزولی قوی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N5L01",
+      "market_condition_bucket": "Low Volatility",
+      "regime_gate": {
+        "code": "Vol_Low",
+        "description": "رژیم نوسان پایین (Low Volatility: ATR%(5m) صدک زیر 30)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "candle_pattern",
+          "primitive_id": "marubozu_tf5m",
+          "timeframe": "5m",
+          "pattern": "marubozu",
+          "hypothesis": "momentum_continuation"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 298,
+          "win_rate_pct": 73.49
+        },
+        "out_of_sample": {
+          "n_signals": 271,
+          "win_rate_pct": 71.96,
+          "pnl_per_signal_usd": 0.0793,
+          "z_score_vs_breakeven": 1.847
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 92,
+          "wins": 69,
+          "losses": 23,
+          "win_rate": 75.0,
+          "pnl": 11.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 19,
+          "wins": 15,
+          "losses": 4,
+          "win_rate": 78.95,
+          "pnl": 3.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 17,
+          "wins": 11,
+          "losses": 6,
+          "win_rate": 64.71,
+          "pnl": -0.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 54,
+          "wins": 38,
+          "losses": 16,
+          "win_rate": 70.37,
+          "pnl": 3.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 60,
+          "wins": 49,
+          "losses": 11,
+          "win_rate": 81.67,
+          "pnl": 13.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 13,
+          "wins": 7,
+          "losses": 6,
+          "win_rate": 53.85,
+          "pnl": -2.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 16,
+          "wins": 11,
+          "losses": 5,
+          "win_rate": 68.75,
+          "pnl": 0.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 27,
+          "wins": 19,
+          "losses": 8,
+          "win_rate": 70.37,
+          "pnl": 1.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 56,
+          "wins": 40,
+          "losses": 16,
+          "win_rate": 71.43,
+          "pnl": 4.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 29,
+          "wins": 19,
+          "losses": 10,
+          "win_rate": 65.52,
+          "pnl": -0.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 73,
+          "wins": 49,
+          "losses": 24,
+          "win_rate": 67.12,
+          "pnl": 0.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 113,
+          "wins": 87,
+          "losses": 26,
+          "win_rate": 76.99,
+          "pnl": 17.5
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "دو تیک تاییدی + مارابوزو(5m)؛ تکمیل پوشش نوسان پایین",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N5L02",
+      "market_condition_bucket": "Low Volatility",
+      "regime_gate": {
+        "code": "Vol_Low",
+        "description": "رژیم نوسان پایین (Low Volatility: ATR%(5m) صدک زیر 30)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "OBV_slope",
+          "primitive_id": "obv_slope_tf5m_10",
+          "timeframe": "5m",
+          "lookback": 10,
+          "hypothesis": "momentum_continuation"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 1505,
+          "win_rate_pct": 67.91
+        },
+        "out_of_sample": {
+          "n_signals": 837,
+          "win_rate_pct": 69.53,
+          "pnl_per_signal_usd": 0.043,
+          "z_score_vs_breakeven": 1.76
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 156,
+          "wins": 118,
+          "losses": 38,
+          "win_rate": 75.64,
+          "pnl": 21.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 189,
+          "wins": 136,
+          "losses": 53,
+          "win_rate": 71.96,
+          "pnl": 15.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 194,
+          "wins": 120,
+          "losses": 74,
+          "win_rate": 61.86,
+          "pnl": -14.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 188,
+          "wins": 137,
+          "losses": 51,
+          "win_rate": 72.87,
+          "pnl": 17.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 206,
+          "wins": 148,
+          "losses": 58,
+          "win_rate": 71.84,
+          "pnl": 16.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 164,
+          "wins": 109,
+          "losses": 55,
+          "win_rate": 66.46,
+          "pnl": -0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 199,
+          "wins": 118,
+          "losses": 81,
+          "win_rate": 59.3,
+          "pnl": -22.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 209,
+          "wins": 136,
+          "losses": 73,
+          "win_rate": 65.07,
+          "pnl": -5.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 237,
+          "wins": 166,
+          "losses": 71,
+          "win_rate": 70.04,
+          "pnl": 12.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 192,
+          "wins": 123,
+          "losses": 69,
+          "win_rate": 64.06,
+          "pnl": -7.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 216,
+          "wins": 148,
+          "losses": 68,
+          "win_rate": 68.52,
+          "pnl": 6.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 192,
+          "wins": 145,
+          "losses": 47,
+          "win_rate": 75.52,
+          "pnl": 25.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "مومنتوم میکرو + شیب OBV(10,5m)؛ تاییدیه جریان حجم در نوسان پایین",
+      "max_signal_overlap_with_other_selected_strategies_pct": 12.2
+    },
+    {
+      "id": "STRAT-N6W01",
+      "market_condition_bucket": "Weak Momentum",
+      "regime_gate": {
+        "code": "Mom_Weak",
+        "description": "مومنتوم ضعیف (Weak Momentum: |ROC10(5m)| صدک زیر 70)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "primitive_id": "bb_rev_tf5m_14_1.5",
+          "timeframe": "5m",
+          "period": 14,
+          "std": 1.5,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 608,
+          "win_rate_pct": 70.07
+        },
+        "out_of_sample": {
+          "n_signals": 400,
+          "win_rate_pct": 71.25,
+          "pnl_per_signal_usd": 0.0688,
+          "z_score_vs_breakeven": 1.945
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 119,
+          "wins": 79,
+          "losses": 40,
+          "win_rate": 66.39,
+          "pnl": -0.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 73,
+          "wins": 47,
+          "losses": 26,
+          "win_rate": 64.38,
+          "pnl": -2.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 45,
+          "wins": 34,
+          "losses": 11,
+          "win_rate": 75.56,
+          "pnl": 6.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 89,
+          "wins": 62,
+          "losses": 27,
+          "win_rate": 69.66,
+          "pnl": 4.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 96,
+          "wins": 77,
+          "losses": 19,
+          "win_rate": 80.21,
+          "pnl": 19.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 51,
+          "wins": 33,
+          "losses": 18,
+          "win_rate": 64.71,
+          "pnl": -1.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 46,
+          "wins": 28,
+          "losses": 18,
+          "win_rate": 60.87,
+          "pnl": -4.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 89,
+          "wins": 66,
+          "losses": 23,
+          "win_rate": 74.16,
+          "pnl": 10.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 143,
+          "wins": 101,
+          "losses": 42,
+          "win_rate": 70.63,
+          "pnl": 8.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 64,
+          "wins": 39,
+          "losses": 25,
+          "win_rate": 60.94,
+          "pnl": -5.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 105,
+          "wins": 75,
+          "losses": 30,
+          "win_rate": 71.43,
+          "pnl": 7.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 88,
+          "wins": 70,
+          "losses": 18,
+          "win_rate": 79.55,
+          "pnl": 17.0
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "دو تیک تاییدی + %B بولینگر(14,1.5,5m)؛ تکمیل پوشش مومنتوم ضعیف",
+      "max_signal_overlap_with_other_selected_strategies_pct": 79.4
+    },
+    {
+      "id": "STRAT-N6W02",
+      "market_condition_bucket": "Weak Momentum",
+      "regime_gate": {
+        "code": "Mom_Weak",
+        "description": "مومنتوم ضعیف (Weak Momentum: |ROC10(5m)| صدک زیر 70)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "CCI",
+          "primitive_id": "cci_mea_tf5m_20_150",
+          "timeframe": "5m",
+          "period": 20,
+          "threshold": 150,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 256,
+          "win_rate_pct": 71.48
+        },
+        "out_of_sample": {
+          "n_signals": 147,
+          "win_rate_pct": 73.47,
+          "pnl_per_signal_usd": 0.102,
+          "z_score_vs_breakeven": 1.75
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 37,
+          "wins": 32,
+          "losses": 5,
+          "win_rate": 86.49,
+          "pnl": 11.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 34,
+          "wins": 22,
+          "losses": 12,
+          "win_rate": 64.71,
+          "pnl": -1.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 28,
+          "wins": 20,
+          "losses": 8,
+          "win_rate": 71.43,
+          "pnl": 2.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 36,
+          "wins": 25,
+          "losses": 11,
+          "win_rate": 69.44,
+          "pnl": 1.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 35,
+          "wins": 26,
+          "losses": 9,
+          "win_rate": 74.29,
+          "pnl": 4.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 22,
+          "wins": 15,
+          "losses": 7,
+          "win_rate": 68.18,
+          "pnl": 0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 25,
+          "wins": 15,
+          "losses": 10,
+          "win_rate": 60.0,
+          "pnl": -2.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 39,
+          "wins": 28,
+          "losses": 11,
+          "win_rate": 71.79,
+          "pnl": 3.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 52,
+          "wins": 41,
+          "losses": 11,
+          "win_rate": 78.85,
+          "pnl": 9.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 29,
+          "wins": 18,
+          "losses": 11,
+          "win_rate": 62.07,
+          "pnl": -2.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 36,
+          "wins": 26,
+          "losses": 10,
+          "win_rate": 72.22,
+          "pnl": 3.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 30,
+          "wins": 23,
+          "losses": 7,
+          "win_rate": 76.67,
+          "pnl": 4.5
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "مومنتوم میکرو + CCI(20,5m) بازگشتی؛ مومنتوم ضعیف",
+      "max_signal_overlap_with_other_selected_strategies_pct": 100.0
+    },
+    {
+      "id": "STRAT-N7A01",
+      "market_condition_bucket": "General / All Conditions",
+      "regime_gate": {
+        "code": "All",
+        "description": "بدون فیلتر رژیم بازار (General / All Conditions)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "candle_pattern",
+          "primitive_id": "marubozu_tf5m",
+          "timeframe": "5m",
+          "pattern": "marubozu",
+          "hypothesis": "momentum_continuation"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 534,
+          "win_rate_pct": 71.72
+        },
+        "out_of_sample": {
+          "n_signals": 486,
+          "win_rate_pct": 70.58,
+          "pnl_per_signal_usd": 0.0586,
+          "z_score_vs_breakeven": 1.828
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 180,
+          "wins": 129,
+          "losses": 51,
+          "win_rate": 71.67,
+          "pnl": 13.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 37,
+          "wins": 28,
+          "losses": 9,
+          "win_rate": 75.68,
+          "pnl": 5.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 29,
+          "wins": 19,
+          "losses": 10,
+          "win_rate": 65.52,
+          "pnl": -0.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 80,
+          "wins": 55,
+          "losses": 25,
+          "win_rate": 68.75,
+          "pnl": 2.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 103,
+          "wins": 77,
+          "losses": 26,
+          "win_rate": 74.76,
+          "pnl": 12.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 22,
+          "wins": 13,
+          "losses": 9,
+          "win_rate": 59.09,
+          "pnl": -2.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 24,
+          "wins": 17,
+          "losses": 7,
+          "win_rate": 70.83,
+          "pnl": 1.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 59,
+          "wins": 45,
+          "losses": 14,
+          "win_rate": 76.27,
+          "pnl": 8.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 96,
+          "wins": 64,
+          "losses": 32,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 54,
+          "wins": 33,
+          "losses": 21,
+          "win_rate": 61.11,
+          "pnl": -4.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 117,
+          "wins": 78,
+          "losses": 39,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 219,
+          "wins": 168,
+          "losses": 51,
+          "win_rate": 76.71,
+          "pnl": 33.0
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "دو تیک تاییدی + مارابوزو(5m)؛ بدون فیلتر رژیم",
+      "max_signal_overlap_with_other_selected_strategies_pct": 92.0
+    },
+    {
+      "id": "STRAT-N7A02",
+      "market_condition_bucket": "General / All Conditions",
+      "regime_gate": {
+        "code": "All",
+        "description": "بدون فیلتر رژیم بازار (General / All Conditions)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "CCI",
+          "primitive_id": "cci_mea_tf5m_14_100",
+          "timeframe": "5m",
+          "period": 14,
+          "threshold": 100,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 1586,
+          "win_rate_pct": 67.72
+        },
+        "out_of_sample": {
+          "n_signals": 865,
+          "win_rate_pct": 71.91,
+          "pnl_per_signal_usd": 0.0786,
+          "z_score_vs_breakeven": 3.27
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 223,
+          "wins": 168,
+          "losses": 55,
+          "win_rate": 75.34,
+          "pnl": 29.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 199,
+          "wins": 125,
+          "losses": 74,
+          "win_rate": 62.81,
+          "pnl": -11.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 190,
+          "wins": 124,
+          "losses": 66,
+          "win_rate": 65.26,
+          "pnl": -4.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 187,
+          "wins": 145,
+          "losses": 42,
+          "win_rate": 77.54,
+          "pnl": 30.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 213,
+          "wins": 150,
+          "losses": 63,
+          "win_rate": 70.42,
+          "pnl": 12.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 157,
+          "wins": 103,
+          "losses": 54,
+          "win_rate": 65.61,
+          "pnl": -2.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 179,
+          "wins": 91,
+          "losses": 88,
+          "win_rate": 50.84,
+          "pnl": -42.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 238,
+          "wins": 168,
+          "losses": 70,
+          "win_rate": 70.59,
+          "pnl": 14.0
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 231,
+          "wins": 172,
+          "losses": 59,
+          "win_rate": 74.46,
+          "pnl": 27.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 199,
+          "wins": 131,
+          "losses": 68,
+          "win_rate": 65.83,
+          "pnl": -2.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 228,
+          "wins": 159,
+          "losses": 69,
+          "win_rate": 69.74,
+          "pnl": 10.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 207,
+          "wins": 160,
+          "losses": 47,
+          "win_rate": 77.29,
+          "pnl": 33.0
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "مومنتوم میکرو + CCI(14,5m) بازگشتی؛ بدون فیلتر رژیم",
+      "max_signal_overlap_with_other_selected_strategies_pct": 82.3
+    },
+    {
+      "id": "STRAT-N8U01",
+      "market_condition_bucket": "Bullish Trend",
+      "regime_gate": {
+        "code": "Trend_Bullish",
+        "description": "رژیم روند صعودی (Bullish Trend: ADX(14,5m)>=25 و +DI>-DI)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "primitive_id": "bb_rev_tf5m_14_1.5",
+          "timeframe": "5m",
+          "period": 14,
+          "std": 1.5,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 254,
+          "win_rate_pct": 69.29
+        },
+        "out_of_sample": {
+          "n_signals": 170,
+          "win_rate_pct": 72.35,
+          "pnl_per_signal_usd": 0.0853,
+          "z_score_vs_breakeven": 1.573
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 34,
+          "wins": 27,
+          "losses": 7,
+          "win_rate": 79.41,
+          "pnl": 6.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 45,
+          "wins": 35,
+          "losses": 10,
+          "win_rate": 77.78,
+          "pnl": 7.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 25,
+          "wins": 14,
+          "losses": 11,
+          "win_rate": 56.0,
+          "pnl": -4.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 37,
+          "wins": 27,
+          "losses": 10,
+          "win_rate": 72.97,
+          "pnl": 3.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 22,
+          "wins": 15,
+          "losses": 7,
+          "win_rate": 68.18,
+          "pnl": 0.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 24,
+          "wins": 18,
+          "losses": 6,
+          "win_rate": 75.0,
+          "pnl": 3.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 21,
+          "wins": 9,
+          "losses": 12,
+          "win_rate": 42.86,
+          "pnl": -7.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 46,
+          "wins": 31,
+          "losses": 15,
+          "win_rate": 67.39,
+          "pnl": 0.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 49,
+          "wins": 38,
+          "losses": 11,
+          "win_rate": 77.55,
+          "pnl": 8.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 34,
+          "wins": 23,
+          "losses": 11,
+          "win_rate": 67.65,
+          "pnl": 0.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 47,
+          "wins": 29,
+          "losses": 18,
+          "win_rate": 61.7,
+          "pnl": -3.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 40,
+          "wins": 33,
+          "losses": 7,
+          "win_rate": 82.5,
+          "pnl": 9.5
+        }
+      ],
+      "confidence_flag": "MEDIUM",
+      "notes_fa": "مومنتوم میکرو + %B بولینگر(14,1.5,5m)؛ تقویت پوشش روند صعودی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 98.3
+    },
+    {
+      "id": "STRAT-N9S01",
+      "market_condition_bucket": "Sideways / Range",
+      "regime_gate": {
+        "code": "Trend_Sideways",
+        "description": "رژیم بدون روند/رنج (Sideways: ADX(14,5m)<25)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_two_tick_confirm",
+          "primitive_id": "two_tick_confirm",
+          "hypothesis": "price_action_timing"
+        },
+        {
+          "indicator": "CCI",
+          "primitive_id": "cci_mea_tf5m_14_100",
+          "timeframe": "5m",
+          "period": 14,
+          "threshold": 100,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 748,
+          "win_rate_pct": 71.39
+        },
+        "out_of_sample": {
+          "n_signals": 503,
+          "win_rate_pct": 71.57,
+          "pnl_per_signal_usd": 0.0736,
+          "z_score_vs_breakeven": 2.333
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 152,
+          "wins": 104,
+          "losses": 48,
+          "win_rate": 68.42,
+          "pnl": 4.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 85,
+          "wins": 59,
+          "losses": 26,
+          "win_rate": 69.41,
+          "pnl": 3.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 61,
+          "wins": 43,
+          "losses": 18,
+          "win_rate": 70.49,
+          "pnl": 3.5
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 110,
+          "wins": 79,
+          "losses": 31,
+          "win_rate": 71.82,
+          "pnl": 8.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 117,
+          "wins": 92,
+          "losses": 25,
+          "win_rate": 78.63,
+          "pnl": 21.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 51,
+          "wins": 34,
+          "losses": 17,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 48,
+          "wins": 30,
+          "losses": 18,
+          "win_rate": 62.5,
+          "pnl": -3.0
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 124,
+          "wins": 93,
+          "losses": 31,
+          "win_rate": 75.0,
+          "pnl": 15.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 170,
+          "wins": 126,
+          "losses": 44,
+          "win_rate": 74.12,
+          "pnl": 19.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 75,
+          "wins": 45,
+          "losses": 30,
+          "win_rate": 60.0,
+          "pnl": -7.5
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 149,
+          "wins": 109,
+          "losses": 40,
+          "win_rate": 73.15,
+          "pnl": 14.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 109,
+          "wins": 80,
+          "losses": 29,
+          "win_rate": 73.39,
+          "pnl": 11.0
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "دو تیک تاییدی + CCI(14,5m) بازگشتی؛ تقویت پوشش رنج",
+      "max_signal_overlap_with_other_selected_strategies_pct": 80.3
+    },
+    {
+      "id": "STRAT-N0P01",
+      "market_condition_bucket": "Strong Momentum (Up)",
+      "regime_gate": {
+        "code": "Mom_StrongUp",
+        "description": "مومنتوم صعودی قوی (Strong Up Momentum: |ROC10(5m)| صدک بالای 70، جهت مثبت)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "micro_momentum",
+          "primitive_id": "micro_momentum_0.025",
+          "hypothesis": "price_action_timing",
+          "min_move_pct": 0.025
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "primitive_id": "bb_rev_tf5m_14_1.5",
+          "timeframe": "5m",
+          "period": 14,
+          "std": 1.5,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 305,
+          "win_rate_pct": 72.13
+        },
+        "out_of_sample": {
+          "n_signals": 184,
+          "win_rate_pct": 76.09,
+          "pnl_per_signal_usd": 0.1413,
+          "z_score_vs_breakeven": 2.711
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 51,
+          "wins": 47,
+          "losses": 4,
+          "win_rate": 92.16,
+          "pnl": 19.5
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 42,
+          "wins": 32,
+          "losses": 10,
+          "win_rate": 76.19,
+          "pnl": 6.0
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 39,
+          "wins": 28,
+          "losses": 11,
+          "win_rate": 71.79,
+          "pnl": 3.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 36,
+          "wins": 28,
+          "losses": 8,
+          "win_rate": 77.78,
+          "pnl": 6.0
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 21,
+          "wins": 16,
+          "losses": 5,
+          "win_rate": 76.19,
+          "pnl": 3.0
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 23,
+          "wins": 15,
+          "losses": 8,
+          "win_rate": 65.22,
+          "pnl": -0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 32,
+          "wins": 13,
+          "losses": 19,
+          "win_rate": 40.62,
+          "pnl": -12.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 61,
+          "wins": 41,
+          "losses": 20,
+          "win_rate": 67.21,
+          "pnl": 0.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 46,
+          "wins": 37,
+          "losses": 9,
+          "win_rate": 80.43,
+          "pnl": 9.5
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 30,
+          "wins": 20,
+          "losses": 10,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 58,
+          "wins": 40,
+          "losses": 18,
+          "win_rate": 68.97,
+          "pnl": 2.0
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 50,
+          "wins": 43,
+          "losses": 7,
+          "win_rate": 86.0,
+          "pnl": 14.5
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "مومنتوم میکرو + %B بولینگر(14,1.5,5m)؛ تقویت پوشش مومنتوم صعودی قوی",
+      "max_signal_overlap_with_other_selected_strategies_pct": 99.0
+    },
+    {
+      "id": "STRAT-N7A03",
+      "market_condition_bucket": "General / All Conditions",
+      "regime_gate": {
+        "code": "All",
+        "description": "بدون فیلتر رژیم بازار (General / All Conditions)"
+      },
+      "logic": "AND of all components below (all must agree on the SAME direction for a signal to be considered)",
+      "components": [
+        {
+          "indicator": "Momentum_Ratio_V2",
+          "primitive_id": "mrv2_0.6",
+          "threshold": 0.6
+        },
+        {
+          "indicator": "Bollinger_%B",
+          "primitive_id": "bb_rev_tf5m_20_2.0",
+          "timeframe": "5m",
+          "period": 20,
+          "std": 2.0,
+          "hypothesis": "mean_reversion"
+        }
+      ],
+      "direction": "bidirectional (Green or Red depending on which side of the component conditions is met)",
+      "performance": {
+        "in_sample": {
+          "n_signals": 105,
+          "win_rate_pct": 74.29
+        },
+        "out_of_sample": {
+          "n_signals": 93,
+          "win_rate_pct": 73.12,
+          "pnl_per_signal_usd": 0.0968,
+          "z_score_vs_breakeven": 1.32
+        }
+      },
+      "walk_forward_blocks": [
+        {
+          "block": "B1",
+          "is_oos": false,
+          "n": 25,
+          "wins": 20,
+          "losses": 5,
+          "win_rate": 80.0,
+          "pnl": 5.0
+        },
+        {
+          "block": "B2",
+          "is_oos": false,
+          "n": 9,
+          "wins": 7,
+          "losses": 2,
+          "win_rate": 77.78,
+          "pnl": 1.5
+        },
+        {
+          "block": "B3",
+          "is_oos": false,
+          "n": 8,
+          "wins": 4,
+          "losses": 4,
+          "win_rate": 50.0,
+          "pnl": -2.0
+        },
+        {
+          "block": "B4",
+          "is_oos": false,
+          "n": 21,
+          "wins": 17,
+          "losses": 4,
+          "win_rate": 80.95,
+          "pnl": 4.5
+        },
+        {
+          "block": "B5",
+          "is_oos": false,
+          "n": 20,
+          "wins": 15,
+          "losses": 5,
+          "win_rate": 75.0,
+          "pnl": 2.5
+        },
+        {
+          "block": "B6",
+          "is_oos": false,
+          "n": 11,
+          "wins": 7,
+          "losses": 4,
+          "win_rate": 63.64,
+          "pnl": -0.5
+        },
+        {
+          "block": "B7",
+          "is_oos": false,
+          "n": 2,
+          "wins": 1,
+          "losses": 1,
+          "win_rate": 50.0,
+          "pnl": -0.5
+        },
+        {
+          "block": "B8",
+          "is_oos": false,
+          "n": 9,
+          "wins": 7,
+          "losses": 2,
+          "win_rate": 77.78,
+          "pnl": 1.5
+        },
+        {
+          "block": "B9",
+          "is_oos": true,
+          "n": 25,
+          "wins": 14,
+          "losses": 11,
+          "win_rate": 56.0,
+          "pnl": -4.0
+        },
+        {
+          "block": "B10",
+          "is_oos": true,
+          "n": 6,
+          "wins": 4,
+          "losses": 2,
+          "win_rate": 66.67,
+          "pnl": 0.0
+        },
+        {
+          "block": "B11",
+          "is_oos": true,
+          "n": 25,
+          "wins": 19,
+          "losses": 6,
+          "win_rate": 76.0,
+          "pnl": 3.5
+        },
+        {
+          "block": "B12",
+          "is_oos": true,
+          "n": 37,
+          "wins": 31,
+          "losses": 6,
+          "win_rate": 83.78,
+          "pnl": 9.5
+        }
+      ],
+      "confidence_flag": "HIGH",
+      "notes_fa": "نسبت مومنتوم NEXA V2 (نرمال‌شده با ATR(3,5m) علّی) + %B بولینگر(20,2,5m)؛ تنها ترکیب مبتنی بر Momentum Ratio V2 که در اعتبارسنجی IS و OOS هر دو پایدار ماند",
+      "max_signal_overlap_with_other_selected_strategies_pct": 48.5
+    }
+  ]
+}

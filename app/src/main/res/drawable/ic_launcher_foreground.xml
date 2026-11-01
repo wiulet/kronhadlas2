@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Same up/down candle-arrow silhouette as the original icon, recolored to
+         gold + light violet (instead of teal/red) so this build's icon is
+         clearly distinguishable at a glance from the previously-installed app. -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M30,74 L48,50 L60,62 L82,32 L88,38 L60,78 L48,66 L36,80 Z" />
+    <path
+        android:fillColor="#B39DDB"
+        android:pathData="M30,34 L48,58 L60,46 L82,76 L88,70 L60,30 L48,42 L36,28 Z" />
+    <!-- Small "A" (Alpha) badge, bottom-right, to reinforce the distinct build. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,86 L80,68 L84,68 L90,86 L86,86 L84.7,82 L79.3,82 L78,86 Z M80.4,78.5 L83.6,78.5 L82,73.5 Z" />
+</vector>

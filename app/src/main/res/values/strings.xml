@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BTCUSDT Signal Alpha</string>
+    <string name="notification_channel_signals_name">Trading Signals</string>
+    <string name="notification_channel_signals_desc">New 5-minute candle color predictions</string>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <color name="bg_base">#07070A</color>
+    <color name="bg_surface">#121218</color>
+    <color name="green_signal">#23E6A8</color>
+    <color name="red_signal">#FF3B5C</color>
+    <color name="text_primary">#F2F0F4</color>
+    <color name="text_secondary">#A6A2B1</color>
+</resources>
